@@ -63,15 +63,30 @@ void lib_mysqludf_getpwuid_deinit(UDF_INIT *initid)
 }
 
 /* For functions that return STRING or DECIMAL */ 
-char* lib_mysqludf_getpwuid(UDF_INIT *initid, UDF_ARGS *args, char* result, unsigned long* length,	char *is_null, char *error)
+char* lib_mysqludf_getpwuid(
+        UDF_INIT *initid,
+        UDF_ARGS *args,
+        char* result,
+        unsigned long* length,
+        char *is_null,
+        char *error
+        )
 {
-    struct passwd *pwd;
+    struct passwd pwent;
+    struct passwd *pwentp;
     long long uid;
+    char buf[1024];
+    int s;
 
+    strcpy(result, "unknown");
     uid = *((long long*) args->args[0] );
-    pwd = getpwuid( uid );
-	strcpy(result, pwd->pw_name);
-	*length = strlen(result);
-	return result;
+    s = getpwuid_r( uid, &pwent, buf, sizeof buf, &pwentp );
+    if ( pwentp == NULL) {
+        strcpy(result, "unknown");
+    } else {
+        strcpy(result, pwent.pw_name);
+    }
+    *length = strlen(result);
+    return result;
 }
 
